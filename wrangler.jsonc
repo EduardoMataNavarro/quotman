@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quotman",
+  "main": "dist/server/server.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [{ "pattern": "quotman.dasom.mx", "custom_domain": true }],
+  "observability": { "enabled": true },
+
+  "assets": {
+    "directory": "dist/browser",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    // Prerendered quotation pages hold client data: the Worker checks the quotation
+    // session before any of them is served (src/server-logic.ts).
+    "run_worker_first": ["/q/*"]
+  },
+
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "quotman-files" }],
+
+  "vars": {
+    "ENVIRONMENT": "production",
+    "APP_URL": "https://quotman.dasom.mx"
+  }
+  // Secrets (wrangler secret put / .dev.vars): DATABASE_URL, RESEND_API_KEY, SESSION_SECRET,
+  // ADMIN_EMAIL, BUILD_TOKEN, DEPLOY_HOOK_URL
+}

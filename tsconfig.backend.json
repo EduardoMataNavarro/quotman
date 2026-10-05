@@ -1,0 +1,9 @@
+/* Worker-side code: the Hono API and framework-free shared code. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types"],
+    "lib": ["ES2023"]
+  },
+  "include": ["backend/**/*.ts", "shared/**/*.ts"]
+}

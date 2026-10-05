@@ -7,12 +7,21 @@ then accept, reject or request changes. Lives at `https://quotman.dasom.mx`.
 §9 tracks progress: tick a phase only when it's done and verified, and update the plan in
 the same change whenever a decision changes (add it to §12 with the date).
 
-Status: planning done, nothing scaffolded yet. Next up: phase 1.
+Status: phase 1 (scaffold) done. Next up: phase 2 (document component).
+
+## Commands
+
+Node ≥ 24.15 (`nvm use`, reads `.nvmrc`). Copy `.dev.vars.example` to `.dev.vars` once.
+
+- `npm run dev`: development build + `wrangler dev` (the real Worker; R2 local, database = the Neon branch in `DATABASE_URL`).
+  `ng serve` has no bindings, so API calls fail there.
+- `npm run db:generate` after changing a model, then `npm run db:migrate`.
+- `npm run typecheck` · `npm run lint` · `npm test` (Angular) · `npm run test:backend`.
 
 ## Stack
 
 Angular 22 (standalone, signals, zoneless) with `@angular/ssr` · Tailwind CSS v4 · Hono ·
-Cloudflare Workers + Static Assets (one Worker) · D1 + Drizzle · R2 · pdf-lib + fontkit ·
+Cloudflare Workers + Static Assets (one Worker) · Neon Postgres (HTTP driver) + Drizzle · R2 · pdf-lib + fontkit ·
 Resend. No NGXS: signals + `httpResource`, sessionStorage only for per-tab drafts.
 
 ## Backend layout
@@ -41,7 +50,7 @@ calls backend modules for domain rules instead of re-implementing them (PLAN.md 
   email scanners prefetch links.
 - **Accepted / rejected quotations are frozen.** Changes mean duplicating into a new draft.
 - **Lines created from a service snapshot** its title, description and price.
-- **Secrets** (`RESEND_API_KEY`, `SESSION_SECRET`, `ADMIN_EMAIL`, `BUILD_TOKEN`,
+- **Secrets** (`DATABASE_URL`, `RESEND_API_KEY`, `SESSION_SECRET`, `ADMIN_EMAIL`, `BUILD_TOKEN`,
   `DEPLOY_HOOK_URL`) go through `wrangler secret put` and a git-ignored `.dev.vars`. Never
   commit them or ask for them in chat.
 - **Email** is sent from `@dasom.mx` through Resend.

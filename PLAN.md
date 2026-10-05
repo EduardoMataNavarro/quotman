@@ -3,7 +3,7 @@
 A personal quotation app built on the visual style of `quotations/cotizacion-onp.html`
 (silver sheet, Raleway 600 headings, Finlandica Text body, grouped stages, bracketed totals).
 
-Status: **plan only**, nothing scaffolded yet. Decisions from 2026-10-05 are folded in (§12).
+Status: **phase 1 (scaffold) done**; next is phase 2. Decisions from 2026-10-05 are folded in (§12).
 
 ---
 
@@ -16,7 +16,7 @@ Status: **plan only**, nothing scaffolded yet. Decisions from 2026-10-05 are fol
 | Styling | Tailwind CSS v4 (CSS-first `@theme` tokens) | 4.3 |
 | State | Signals + `httpResource`; sessionStorage for per-tab drafts (no NGXS, see §6) | — |
 | API | Hono, mounted in the same Worker as Angular | 4.13 |
-| Database | Cloudflare D1 (SQLite) + Drizzle ORM / drizzle-kit migrations | 0.45 |
+| Database | Neon (serverless Postgres) over HTTP (`@neondatabase/serverless`) + Drizzle ORM / drizzle-kit migrations | 1.2 / 0.45 |
 | Files | Cloudflare R2 (logo, cached PDFs) | — |
 | PDF | **pdf-lib** + `@pdf-lib/fontkit`, drawn in the Worker (same approach as `manttio/backend/src/lib/pdf.ts`) | 1.17 / 1.1 |
 | Email | Resend | 6.32 |
@@ -43,8 +43,8 @@ Browser ──► Cloudflare Worker (quotman)
               ├─ static files    → Static Assets (JS, CSS, fonts, prerendered shells)
               └─ everything else → AngularAppEngine.handle(request)
               
-              Bindings: DB (D1) · FILES (R2) · ASSETS · RATE_LIMIT
-              Secrets:  RESEND_API_KEY · SESSION_SECRET · ADMIN_EMAIL · BUILD_TOKEN · DEPLOY_HOOK_URL
+              Bindings: FILES (R2) · ASSETS · RATE_LIMIT
+              Secrets:  DATABASE_URL · RESEND_API_KEY · SESSION_SECRET · ADMIN_EMAIL · BUILD_TOKEN · DEPLOY_HOOK_URL
 ```
 
 The Worker entry is split in two files:
@@ -94,7 +94,7 @@ unguessable (22-char base62) as a second layer, not as the only one.
 
 ---
 
-## 3. Data model (D1 / Drizzle)
+## 3. Data model (Neon Postgres / Drizzle)
 
 All money is stored as **integer cents** (MXN). Totals come from one shared function,
 `shared/totals.ts`, used by the API, the Angular document and the PDF, so the three can't
@@ -354,8 +354,8 @@ client). When a layer outgrows one file it becomes a folder of the same name
 | **type** | Domain types and interfaces (`Quotation`, `QuotationWithLines`, `Totals`) | `enum` | Runtime code |
 | **enum** | `as const` objects + derived union types, e.g. `QuotationStatus = { Draft: 'draft', … } as const` | nothing | TS `enum` (not erasable; awkward across the Angular / Worker boundary) |
 | **dto** | zod schemas for every request body, query and response, and their inferred types (`CreateQuotationDto`) | `enum`, `type`, zod | Drizzle, Hono |
-| **model** | Drizzle `sqliteTable` definitions and relations for the module's tables | drizzle-orm, other models for foreign keys | Queries |
-| **repository** | Every D1 query for the module's tables; maps rows ⇄ domain types; owns atomic writes through `db.batch()` | `model`, `type`, `core/db` | Business rules, Hono, other modules' repositories |
+| **model** | Drizzle `pgTable` definitions and relations for the module's tables | drizzle-orm, other models for foreign keys | Queries |
+| **repository** | Every database query for the module's tables; maps rows ⇄ domain types; owns atomic writes through `db.batch()` | `model`, `type`, `core/db` | Business rules, Hono, other modules' repositories |
 | **client** | Thin adapters over external services (Resend, R2, deploy hook) with a small interface the service depends on | external SDK, `core/env` | Business rules |
 | **service** | Business logic: rules, status transitions, totals, orchestration. Plain functions over injected deps; throws domain errors | own `repository`, `client`, `type`, `enum`, `dto` types, `shared/`, other modules' `index.ts` | Hono context, raw SQL, `c.env` |
 | **routes** | Hono router: auth middleware, `zValidator` with the DTOs, calls the service, shapes the response | own `service` and `dto`, `core/http` | Repositories, models, business rules |
@@ -385,15 +385,15 @@ service ──► repository ──► model
   `ConflictError`, `ForbiddenError`, `ValidationError`, `GoneError`); `app.onError` maps them
   to JSON with a stable `code` and a Spanish `message`. Routes never build error responses
   by hand.
-- **Transactions.** D1 has no interactive transactions. Multi-statement writes that must be
-  atomic (folio counter + insert, revoke links + delete sessions) are one `db.batch([...])`
+- **Transactions.** The Neon HTTP driver has no interactive transactions. Multi-statement
+  writes that must be atomic (folio counter + insert, revoke links + delete sessions) are one `db.batch([...])`
   inside a single repository method.
 - **Frontend contract.** `dto`, `enum` and `type` files are pure TypeScript + zod, so Angular
   imports them through the `@api/<module>` path alias to type its HTTP calls. A lint rule
   (`no-restricted-imports`) stops the frontend from importing `service`, `repository`,
   `model`, `client` or `routes`.
 - **Testing.** Services are unit-tested with in-memory fakes of their repository and client
-  interfaces. Repositories and routes are tested against a local D1 with Vitest +
+  interfaces. Repositories and routes are tested against a Neon dev branch with Vitest +
   `@cloudflare/vitest-pool-workers`.
 
 #### Modules
@@ -434,18 +434,18 @@ POST /api/q/:slug/accept
 Progress is tracked here: tick a checkpoint when it's done and verified, and tick the phase
 when all its checkpoints are.
 
-- [ ] **1. Scaffold**
-  - [ ] Angular 22 + SSR, zoneless, Tailwind v4 with the `@theme` tokens, self-hosted fonts
-  - [ ] `src/server.ts` as scaffolding only: AngularAppEngine, root Hono app, route wiring,
+- [x] **1. Scaffold**
+  - [x] Angular 22 + SSR, zoneless, Tailwind v4 with the `@theme` tokens, self-hosted fonts
+  - [x] `src/server.ts` as scaffolding only: AngularAppEngine, root Hono app, route wiring,
         Worker `fetch` export
-  - [ ] `src/server-logic.ts` created with stubbed handlers (`servePrivateQuotation`,
+  - [x] `src/server-logic.ts` created with stubbed handlers (`servePrivateQuotation`,
         `renderGonePage`) that `server.ts` already routes to
-  - [ ] `backend/app.ts` + `backend/core/` (env types, db factory, errors + `onError`,
+  - [x] `backend/app.ts` + `backend/core/` (env types, db factory, errors + `onError`,
         request-id/logging middleware, crypto helpers)
-  - [ ] Module skeleton convention in place with one example module, and the
+  - [x] Module skeleton convention in place with one example module, and the
         `no-restricted-imports` rule keeping the frontend to `dto` / `enum` / `type`
-  - [ ] `wrangler.jsonc`: D1, R2, assets with `run_worker_first: ["/q/*"]`
-  - [ ] `wrangler dev` serves an Angular page and `/api/health`
+  - [x] `wrangler.jsonc`: R2, assets with `run_worker_first: ["/q/*"]`
+  - [x] `wrangler dev` serves an Angular page and `/api/health`
 - [ ] **2. Document component**
   - [ ] Port `cotizacion-onp.html` to `<qm-quotation-document>` with a typed input
   - [ ] `bracket-amount`, `sine-squares`, `download-button` as shared UI
@@ -486,7 +486,7 @@ when all its checkpoints are.
   - [ ] R2 cache per version (`files` module); download button wired
 - [ ] **10. Deploy**
   - [ ] `quotman.dasom.mx` custom domain; `dasom.mx` verified in Resend
-  - [ ] Secrets set; remote D1 migrations applied
+  - [ ] Secrets set (incl. `DATABASE_URL`); migrations applied to the Neon production branch
   - [ ] Smoke test: publish → email → open → request changes → republish → accept → PDF
 ---
 
@@ -494,6 +494,8 @@ when all its checkpoints are.
 
 - **Resend API key**: don't paste it into chat or commit it. Set it with
   `npx wrangler secret put RESEND_API_KEY`, and in `.dev.vars` locally (git-ignored).
+- `DATABASE_URL`: Neon pooled connection string (a dev branch in `.dev.vars`, production via
+  `wrangler secret put`).
 - `ADMIN_EMAIL`, `SESSION_SECRET`, `BUILD_TOKEN` (random 32+ bytes each) via
   `wrangler secret put`.
 - `DEPLOY_HOOK_URL`: created in the Cloudflare dashboard once the repo is connected to
@@ -533,3 +535,13 @@ when all its checkpoints are.
 5. **Admin auth** — self-built (§4.1).
 6. **Domain** — app at `https://quotman.dasom.mx`; email sent from `@dasom.mx` via Resend (§10).
 7. **PDF** — pdf-lib in the Worker, as in manttio; no Browser Rendering (§5.3).
+8. **Phase 1 build notes** — Node ≥ 24.15 (Angular CLI 22 minimum; `.nvmrc` pins 24.21).
+   `ssr.platform: "neutral"` so the server bundle runs on Workers. The catalog's domain type
+   is `CatalogItem` (table stays `services`). Until the `auth` module lands,
+   `/api/admin/*` uses `adminGuardPlaceholder`: open only when `ENVIRONMENT=development`,
+   401 everywhere else. `/q/*` denies everything until phase 6.
+9. **Database: Neon instead of D1** (2026-10-05). Serverless Postgres over HTTP
+   (`drizzle-orm/neon-http`), connection string in the `DATABASE_URL` secret. Atomic
+   multi-statement writes still go through `db.batch()`. Migrations: `npm run db:generate`,
+   then `npm run db:migrate` against the branch in `.dev.vars`. Money stays integer cents
+   (`integer`), timestamps are `timestamptz` exposed as ISO strings.

@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/raleway';
+@import '@fontsource-variable/finlandica-text';
+
+/* Tokens ported from quotations/cotizacion-onp.html. */
+@theme {
+  --color-mist: #edf6f7;
+  --color-ice: #c6dbde;
+  --color-slate: #48565a;
+  --color-ink: #111416;
+  --color-void: #020506;
+  --color-silver-hi: #e3e6e7;
+  --color-silver-lo: #cdd2d4;
+  --color-rule: rgb(2 5 6 / 0.14);
+  --color-muted: rgb(72 86 90 / 0.85);
+
+  --font-heading: 'Raleway Variable', 'Raleway', sans-serif;
+  --font-body: 'Finlandica Text Variable', 'Finlandica Text', system-ui, sans-serif;
+  --font-sans: var(--font-body);
+
+  /* Settled type scale: labels, descriptions, stages, lines, subtotal, IVA, total. */
+  --text-label: 13px;
+  --text-desc: 14px;
+  --text-stage: 15px;
+  --text-line: 16px;
+  --text-subtotal: 19px;
+  --text-tax: 25px;
+  --text-total: 33px;
+
+  --radius-control: 0.5rem;
+  --radius-chip: 0.75rem;
+  --radius-card: 1rem;
+
+  --background-image-brushed: linear-gradient(
+    135deg,
+    #f4f6f7 0%,
+    #e1e5e7 25%,
+    #cdd2d5 50%,
+    #b9c0c4 75%,
+    #a7afb4 100%
+  );
+}
+
+@layer base {
+  html {
+    @apply bg-brushed;
+    background-color: #cdd2d5;
+    min-height: 100%;
+  }
+
+  body {
+    @apply font-body text-ink antialiased;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-heading font-semibold;
+    font-synthesis-weight: none;
+  }
+}
