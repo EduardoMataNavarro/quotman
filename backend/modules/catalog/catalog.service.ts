@@ -1,6 +1,7 @@
 import type { Clock } from '../../core/clock';
 import { NotFoundError } from '../../core/errors';
 import type { Ids } from '../../core/ids';
+import { stripUndefined } from '../../core/objects';
 import type { CreateCatalogItemDto, UpdateCatalogItemDto } from './catalog.dto';
 import type { CatalogRepository } from './catalog.repository';
 import type { CatalogItem } from './catalog.type';
@@ -55,7 +56,3 @@ export function createCatalogService({ repo, clock, ids }: CatalogServiceDeps) {
 }
 
 export type CatalogService = ReturnType<typeof createCatalogService>;
-
-function stripUndefined<T extends object>(value: T): Partial<T> {
-  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as Partial<T>;
-}

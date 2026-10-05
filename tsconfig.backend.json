@@ -5,5 +5,6 @@
     "types": ["@cloudflare/workers-types"],
     "lib": ["ES2023"]
   },
-  "include": ["backend/**/*.ts", "shared/**/*.ts"]
+  "include": ["backend/**/*.ts", "shared/**/*.ts"],
+  "exclude": ["backend/test/**", "**/*.test.ts"]
 }

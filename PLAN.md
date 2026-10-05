@@ -3,7 +3,7 @@
 A personal quotation app built on the visual style of `quotations/cotizacion-onp.html`
 (silver sheet, Raleway 600 headings, Finlandica Text body, grouped stages, bracketed totals).
 
-Status: **phases 1–2 done**; next is phase 3. Decisions from 2026-10-05 are folded in (§12).
+Status: **phases 1–3 done**; next is phase 4. Decisions from 2026-10-05 are folded in (§12).
 
 ---
 
@@ -101,7 +101,7 @@ All money is stored as **integer cents** (MXN). Totals come from one shared func
 disagree.
 
 ```
-issuer_profile     (singleton) name, role, email, phone, razon_social, rfc, location, logo_r2_key
+issuer_profile     (singleton) name, role, email, phone, razon_social, rfc, location, logo_url
 clients            id, name, company, email, rfc?, created_at
 services           id, name, description, unit_price_cents, unit, default_stage?, active,
                    created_at, updated_at
@@ -109,14 +109,15 @@ quotations         id, slug, folio ('COT-2026-001'), client_id, title, status,
                    currency ('MXN'), tax_rate_bp (1600 = 16%), issued_on, valid_until,
                    terms (json string[]), notes?, version, published_version?,
                    sent_at?, viewed_at?, decided_at?, created_at, updated_at
-quotation_stages   id, quotation_id, name ('Arquitectura'), position
-quotation_lines    id, quotation_id, stage_id?, service_id?, title, description?,
+quotation_stages   id, quotation_id, name? ('Arquitectura'), position
+quotation_lines    id, quotation_id, stage_id, service_id?, title, description?,
                    qty, unit_price_cents, position
 quotation_actions  id, quotation_id, version, type ('accepted'|'rejected'|'changes_requested'),
                    message?, signer_name?, ip?, user_agent?, created_at
 access_links       id, quotation_id, token_hash, recipient_email, expires_at, created_at,
                    first_used_at?, last_used_at?, use_count, revoked_at?
 sessions           id_hash, kind ('admin'|'quotation'), subject, expires_at, created_at
+sign_in_codes      id, email, code_hash, token_hash, expires_at, used_at?, created_at
 quotation_events   id, quotation_id, type ('sent','viewed','downloaded'), at, meta (json)
 folio_counters     year, last_number
 ```
@@ -450,11 +451,11 @@ when all its checkpoints are.
   - [x] Port `cotizacion-onp.html` to `<qm-quotation-document>` with a typed input
   - [x] `bracket-amount`, `sine-squares`, `download-button` as shared UI
   - [x] Renders the ONP quotation from a fixture, screen and print
-- [ ] **3. Data + API**
-  - [ ] Models + migrations for every table in §3; `core/db/schema.ts` re-exports them
+- [x] **3. Data + API**
+  - [x] Models + migrations for every table in §3; `core/db/schema.ts` re-exports them
   - [x] `shared/totals.ts` with unit tests (done in phase 2, with `shared/format.ts`)
-  - [ ] Modules `catalog`, `clients`, `issuer`, `quotations` (all layers per §8.1), CRUD routes
-  - [ ] Seed with the ONP quotation
+  - [x] Modules `catalog`, `clients`, `issuer`, `quotations` (all layers per §8.1), CRUD routes
+  - [x] Seed with the ONP quotation
 - [ ] **4. Admin auth**
   - [ ] `auth` module: email code + link, sessions, guard middleware, rate limit
   - [ ] `notifications` module with the Resend client and the sign-in template
@@ -550,3 +551,13 @@ when all its checkpoints are.
     `shared/fixtures/onp.ts` for the seed and the PDF comparison. `/muestra` (prerendered)
     renders it and is the screen/print reference; the logo is `public/logo.png`
     until the issuer logo moves to R2.
+11. **Phase 3 notes** — Every line belongs to a stage (`stage_id` required); a stage's name
+    is optional and renders an empty stage cell. The issuer stores `logo_url` (set by the
+    files module on upload) instead of an R2 key. `sign_in_codes` added for §4.1. Folios
+    are `COT-<year of issue>-NNN`, bumped in the same transaction as the insert. The
+    editor saves the whole document (`PUT /api/admin/quotations/:id`); the first save after
+    a publish bumps `version`, so `version > published_version` means unpublished changes.
+    Clients are joined in the service through `clients/index.ts`, never in SQL, to keep
+    modules apart. Repository and route tests run on PGlite (in-memory Postgres) with the
+    real migrations. **Open for phase 6:** the client page currently would see unpublished
+    edits; decide whether `/api/q/:slug` serves the live record or a snapshot taken on publish.

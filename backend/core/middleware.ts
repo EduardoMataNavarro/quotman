@@ -24,9 +24,12 @@ export const requestLog = createMiddleware<AppEnv>(async (c, next) => {
   });
 });
 
-/** Builds the request's services once; routes read them with `c.get('services')`. */
+/**
+ * Builds the request's services once; routes read them with `c.get('services')`. Tests
+ * set them first (against an in-memory database), and then they're left alone.
+ */
 export const services = createMiddleware<AppEnv>(async (c, next) => {
-  c.set('services', buildServices(c.env));
+  if (!c.var.services) c.set('services', buildServices(c.env));
   await next();
 });
 

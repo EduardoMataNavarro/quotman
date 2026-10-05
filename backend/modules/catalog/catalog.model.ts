@@ -1,4 +1,5 @@
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, text } from 'drizzle-orm/pg-core';
+import { createdAt, updatedAt } from '../../core/db/columns';
 
 /** The sellable catalog. Quotation lines copy from it; editing it never changes a line. */
 export const services = pgTable('services', {
@@ -9,9 +10,8 @@ export const services = pgTable('services', {
   unit: text('unit').notNull().default('servicio'),
   defaultStage: text('default_stage'),
   active: boolean('active').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
 });
 
 export type ServiceRow = typeof services.$inferSelect;
-export type NewServiceRow = typeof services.$inferInsert;

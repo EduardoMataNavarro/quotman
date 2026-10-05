@@ -7,7 +7,7 @@ then accept, reject or request changes. Lives at `https://quotman.dasom.mx`.
 §9 tracks progress: tick a phase only when it's done and verified, and update the plan in
 the same change whenever a decision changes (add it to §12 with the date).
 
-Status: phases 1–2 done. Next up: phase 3 (data + API).
+Status: phases 1–3 done. Next up: phase 4 (admin auth).
 
 ## Commands
 
@@ -15,7 +15,9 @@ Node ≥ 24.15 (`nvm use`, reads `.nvmrc`). Copy `.dev.vars.example` to `.dev.va
 
 - `npm run dev`: development build + `wrangler dev` (the real Worker; R2 local, database = the Neon branch in `DATABASE_URL`).
   `ng serve` has no bindings, so API calls fail there.
-- `npm run db:generate` after changing a model, then `npm run db:migrate`.
+- `npm run db:generate` after changing a model, then `npm run db:migrate`; `npm run db:seed`
+  loads the ONP quotation.
+- Backend tests run against PGlite (in-memory Postgres, real migrations): no Neon needed.
 - `npm run typecheck` · `npm run lint` · `npm test` (Angular) · `npm run test:backend`.
 
 ## Stack

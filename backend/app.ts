@@ -5,6 +5,9 @@ import { AppError } from './core/errors';
 import { log } from './core/logger';
 import { adminGuardPlaceholder, requestId, requestLog, services } from './core/middleware';
 import { catalogRoutes } from './modules/catalog';
+import { clientsRoutes } from './modules/clients';
+import { issuerRoutes } from './modules/issuer';
+import { quotationsAdminRoutes } from './modules/quotations';
 
 /** The API, mounted under `/api` by `src/server.ts`. */
 export const api = new Hono<AppEnv>()
@@ -13,7 +16,10 @@ export const api = new Hono<AppEnv>()
   .get('/health', (c) => c.json({ ok: true }))
   .use(services)
   .use('/admin/*', adminGuardPlaceholder)
-  .route('/admin/catalog', catalogRoutes);
+  .route('/admin/catalog', catalogRoutes)
+  .route('/admin/clients', clientsRoutes)
+  .route('/admin/issuer', issuerRoutes)
+  .route('/admin/quotations', quotationsAdminRoutes);
 
 api.notFound((c) =>
   c.json({ error: { code: 'not_found', message: 'Esta ruta no existe.' } }, 404),
