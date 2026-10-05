@@ -47,9 +47,17 @@ Browser ──► Cloudflare Worker (quotman)
               Secrets:  RESEND_API_KEY · SESSION_SECRET · ADMIN_EMAIL · BUILD_TOKEN · DEPLOY_HOOK_URL
 ```
 
-`src/server.ts` builds the Hono app, mounts `/api`, and hands page requests to Angular's
-`AngularAppEngine`. `wrangler.jsonc` sets `assets.run_worker_first: ["/q/*"]` so **no
-prerendered quotation is ever served without passing the session check**.
+The Worker entry is split in two files:
+
+| File | Holds | Doesn't hold |
+|---|---|---|
+| `src/server.ts` | **Scaffolding only.** Creates the `AngularAppEngine` and the root Hono app, mounts `backend/app.ts` under `/api`, registers the page routes by pointing them at handlers from `server-logic.ts`, and exports the Worker `fetch`. Reads like a table of contents. | Any `if` about sessions, statuses or HTML |
+| `src/server-logic.ts` | **Page-serving logic and HTML string building.** The `/q/*` gate (session check through `access/index.ts`, redirect to `/acceso?q=<slug>` when missing), choosing the prerendered asset (`env.ASSETS.fetch`) vs the SSR fallback, response headers (`Cache-Control: private, no-store`, CSP, `X-Robots-Tag: noindex`), and the HTML strings the Worker builds itself: the expired / revoked / not-found pages and any `<head>` injection (title, meta) into rendered or static HTML. | Domain rules: those stay in `backend/modules/*` and are called through each module's `index.ts` |
+
+`server-logic.ts` exports plain functions (`servePrivateQuotation(c)`, `renderGonePage(…)`),
+so they're unit-testable without booting Angular. `wrangler.jsonc` sets
+`assets.run_worker_first: ["/q/*"]` so **no prerendered quotation is ever served without
+passing the session check**.
 
 ### 2.1 SSG for quotation URLs + headless hydration
 
@@ -238,7 +246,7 @@ Matching the template's look:
 
 | Template element | pdf-lib |
 |---|---|
-| Fonts | `@pdf-lib/fontkit` with **static TTFs**: Raleway SemiBold, Finlandica Text Regular + Medium, embedded with `subset: true`. Variable fonts only embed their default instance in pdf-lib, and the Fontsource packages ship woff2, so the PDF needs separate TTF files in `server/pdf/fonts/`. |
+| Fonts | `@pdf-lib/fontkit` with **static TTFs**: Raleway SemiBold, Finlandica Text Regular + Medium, embedded with `subset: true`. Variable fonts only embed their default instance in pdf-lib, and the Fontsource packages ship woff2, so the PDF needs separate TTF files in `backend/modules/pdf/fonts/`. |
 | Silver sheet | A solid `#e3e6e7` page fill. pdf-lib has no gradient helper, and a flat fill also avoids the dark-blob problem we hit with translucent layers. |
 | Logo | `embedPng` from R2 |
 | Sine squares | 12 `drawRectangle` calls using the same formula as the template |
@@ -298,16 +306,16 @@ quotman/
 │  │  │  └─ admin/        sign-in, quotations, editor, requests, services, profile
 │  │  ├─ app.routes.ts
 │  │  └─ app.routes.server.ts   ← RenderMode + getPrerenderParams per route
-│  ├─ server.ts           Worker entry: session gate for /q/*, Hono, AngularAppEngine
+│  ├─ server.ts           Worker entry, scaffolding only: AngularAppEngine, Hono, route wiring
+│  ├─ server-logic.ts     /q/* gate, asset vs SSR choice, headers, HTML string building
 │  └─ styles.css          Tailwind + @theme tokens + fonts
-├─ server/
-│  ├─ api/                Hono routers: admin, quotation, auth, build
-│  ├─ auth/               tokens, sessions, middleware
-│  ├─ db/                 drizzle schema, queries
-│  ├─ email/              Resend client + templates
-│  ├─ pdf/                pdf-lib renderer + fonts/*.ttf
-│  └─ rebuild.ts          debounced deploy-hook trigger
-├─ shared/                zod schemas, types, totals(), es-MX/MXN formatting
+├─ backend/               modular API (see §8.1)
+│  ├─ app.ts              Hono app: core middleware, mounts every module's routes, onError
+│  ├─ core/               env bindings, db factory, errors, middleware, crypto, ids, logger
+│  └─ modules/
+│     ├─ auth/  access/  quotations/  catalog/  clients/  issuer/
+│     └─ notifications/  pdf/  build/  files/
+├─ shared/                framework-free code used by both sides: totals(), es-MX/MXN formatting
 ├─ drizzle/               migrations
 ├─ wrangler.jsonc
 └─ package.json
@@ -315,31 +323,171 @@ quotman/
 
 One package, one Worker.
 
+### 8.1 Backend architecture
+
+The backend is split into **feature modules**. Every module has the same layers, each in its
+own file, so finding code is mechanical: "where's the query that loads a quotation?" is
+always `quotations/quotations.repository.ts`.
+
+```
+backend/modules/<module>/
+├─ <module>.type.ts         domain types
+├─ <module>.enum.ts         enumerations
+├─ <module>.dto.ts          request / response contracts (zod)
+├─ <module>.service.ts      business logic
+├─ <module>.repository.ts   database access
+├─ <module>.model.ts        Drizzle table definitions
+├─ <module>.client.ts       external service adapter
+├─ <module>.routes.ts       Hono router (HTTP layer)
+├─ <module>.service.test.ts
+└─ index.ts                 the module's public surface
+```
+
+A module only creates the files it needs (`build` has no model; `quotations` has no
+client). When a layer outgrows one file it becomes a folder of the same name
+(`quotations/repository/…`) with an `index.ts`, and nothing outside notices.
+
+#### Layers
+
+| Layer | Holds | May import | Never |
+|---|---|---|---|
+| **type** | Domain types and interfaces (`Quotation`, `QuotationWithLines`, `Totals`) | `enum` | Runtime code |
+| **enum** | `as const` objects + derived union types, e.g. `QuotationStatus = { Draft: 'draft', … } as const` | nothing | TS `enum` (not erasable; awkward across the Angular / Worker boundary) |
+| **dto** | zod schemas for every request body, query and response, and their inferred types (`CreateQuotationDto`) | `enum`, `type`, zod | Drizzle, Hono |
+| **model** | Drizzle `sqliteTable` definitions and relations for the module's tables | drizzle-orm, other models for foreign keys | Queries |
+| **repository** | Every D1 query for the module's tables; maps rows ⇄ domain types; owns atomic writes through `db.batch()` | `model`, `type`, `core/db` | Business rules, Hono, other modules' repositories |
+| **client** | Thin adapters over external services (Resend, R2, deploy hook) with a small interface the service depends on | external SDK, `core/env` | Business rules |
+| **service** | Business logic: rules, status transitions, totals, orchestration. Plain functions over injected deps; throws domain errors | own `repository`, `client`, `type`, `enum`, `dto` types, `shared/`, other modules' `index.ts` | Hono context, raw SQL, `c.env` |
+| **routes** | Hono router: auth middleware, `zValidator` with the DTOs, calls the service, shapes the response | own `service` and `dto`, `core/http` | Repositories, models, business rules |
+
+Dependency direction, top to bottom only:
+
+```
+routes ──► dto ──► enum / type
+   │
+   ▼
+service ──► repository ──► model
+   │   └──► client
+   └──► other modules' index.ts (service + public types only)
+```
+
+#### Rules
+
+- **Cross-module access goes through `index.ts`.** `access` may call
+  `quotations.service.getBySlug()`; it may never import `quotations.repository` or
+  `quotations.model`. The one exception is `core/db/schema.ts`, which re-exports every model
+  so Drizzle and drizzle-kit see the whole schema.
+- **Dependency injection without a container.** Each service is a factory,
+  `createQuotationsService({ repo, clock, ids })`. Bindings only exist per request on
+  Workers, so a core middleware builds the request's services once
+  (`c.set('services', buildServices(c.env))`) and routes read them from there.
+- **Errors.** Services throw typed errors from `core/errors` (`NotFoundError`,
+  `ConflictError`, `ForbiddenError`, `ValidationError`, `GoneError`); `app.onError` maps them
+  to JSON with a stable `code` and a Spanish `message`. Routes never build error responses
+  by hand.
+- **Transactions.** D1 has no interactive transactions. Multi-statement writes that must be
+  atomic (folio counter + insert, revoke links + delete sessions) are one `db.batch([...])`
+  inside a single repository method.
+- **Frontend contract.** `dto`, `enum` and `type` files are pure TypeScript + zod, so Angular
+  imports them through the `@api/<module>` path alias to type its HTTP calls. A lint rule
+  (`no-restricted-imports`) stops the frontend from importing `service`, `repository`,
+  `model`, `client` or `routes`.
+- **Testing.** Services are unit-tested with in-memory fakes of their repository and client
+  interfaces. Repositories and routes are tested against a local D1 with Vitest +
+  `@cloudflare/vitest-pool-workers`.
+
+#### Modules
+
+| Module | Owns | type | enum | dto | service | repository | model | client | routes |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `auth` | Admin sign-in codes, admin sessions, guard middleware | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `access` | Magic links, quotation sessions, the `/q/*` gate, exchange | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `quotations` | Quotations, stages, lines, folios, status lifecycle, client actions | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `catalog` | Services (the sellable catalog; named `catalog` so "service" keeps meaning the layer) | ✓ | | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `clients` | Client records (the people quotations go to) | ✓ | | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `issuer` | Issuer profile and logo | ✓ | | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `notifications` | Email templates and sending | ✓ | ✓ | | ✓ | | | Resend | |
+| `pdf` | pdf-lib renderer, fonts, R2 cache | ✓ | | | ✓ | | | | ✓ |
+| `build` | Prerender feed, debounced deploy hook | | | ✓ | ✓ | | | Deploy hook | ✓ |
+| `files` | R2 uploads and reads (logo, PDFs) | ✓ | | | ✓ | | | R2 | |
+
+`core/` is not a module: env and binding types, the Drizzle factory, errors, shared Hono
+middleware (request id, logging, rate limit), crypto helpers (random tokens, SHA-256,
+constant-time compare), id and slug generation.
+
+Example request path, client accepts a quotation:
+
+```
+POST /api/q/:slug/accept
+  quotations.routes      access guard (via access/index.ts) → zValidator(AcceptQuotationDto)
+  quotations.service     load by slug, assert status is sent|viewed and not expired,
+                         record the action, set status accepted, freeze
+  quotations.repository  db.batch([insert quotation_actions, update quotations])
+  notifications.service  send "Cotización aceptada" to the admin (Resend client)
+  build.service          schedule the debounced rebuild
+```
+
 ---
 
 ## 9. Phases
 
-Progress is tracked here: tick a phase when it's done and verified.
+Progress is tracked here: tick a checkpoint when it's done and verified, and tick the phase
+when all its checkpoints are.
 
-- [ ] 1. **Scaffold** — Angular 22 + SSR, Tailwind v4, fonts, Hono in `server.ts`,
-      `wrangler.jsonc` (D1, R2, assets with `run_worker_first`); `wrangler dev` serves pages
-      and `/api/health`.
-- [ ] 2. **Document component** — port `cotizacion-onp.html` to `<qm-quotation-document>` with a
-      typed input; render the ONP quotation from a fixture.
-- [ ] 3. **Data + API** — Drizzle schema, migrations, seed (ONP quotation), Hono CRUD for
-      services / quotations / stages / lines, `totals()` with unit tests.
-- [ ] 4. **Admin auth** — email code + link via Resend, sessions, guards, rate limit.
-- [ ] 5. **Admin UI** — list, simple editor with preview, services, profile.
-- [ ] 6. **Magic links + client page** — access links, `/acceso` exchange, quotation sessions,
-      Worker gate on `/q/*`, hydration from `/api/q/:slug`.
-- [ ] 7. **SSG pipeline** — `/api/build/quotations`, `getPrerenderParams`, SSR fallback, Workers
-      Builds + debounced deploy hook on publish.
-- [ ] 8. **Client actions** — accept / request changes / reject column + dialogs, admin
-      "Solicitudes", notification emails.
-- [ ] 9. **PDF** — pdf-lib renderer with embedded fonts, R2 cache, download button.
-- [ ] 10. **Deploy** — custom domain, Resend domain verification, secrets, remote D1 migrations,
-      smoke test: publish → email → open → request changes → republish → accept → PDF.
-
+- [ ] **1. Scaffold**
+  - [ ] Angular 22 + SSR, zoneless, Tailwind v4 with the `@theme` tokens, self-hosted fonts
+  - [ ] `src/server.ts` as scaffolding only: AngularAppEngine, root Hono app, route wiring,
+        Worker `fetch` export
+  - [ ] `src/server-logic.ts` created with stubbed handlers (`servePrivateQuotation`,
+        `renderGonePage`) that `server.ts` already routes to
+  - [ ] `backend/app.ts` + `backend/core/` (env types, db factory, errors + `onError`,
+        request-id/logging middleware, crypto helpers)
+  - [ ] Module skeleton convention in place with one example module, and the
+        `no-restricted-imports` rule keeping the frontend to `dto` / `enum` / `type`
+  - [ ] `wrangler.jsonc`: D1, R2, assets with `run_worker_first: ["/q/*"]`
+  - [ ] `wrangler dev` serves an Angular page and `/api/health`
+- [ ] **2. Document component**
+  - [ ] Port `cotizacion-onp.html` to `<qm-quotation-document>` with a typed input
+  - [ ] `bracket-amount`, `sine-squares`, `download-button` as shared UI
+  - [ ] Renders the ONP quotation from a fixture, screen and print
+- [ ] **3. Data + API**
+  - [ ] Models + migrations for every table in §3; `core/db/schema.ts` re-exports them
+  - [ ] `shared/totals.ts` with unit tests
+  - [ ] Modules `catalog`, `clients`, `issuer`, `quotations` (all layers per §8.1), CRUD routes
+  - [ ] Seed with the ONP quotation
+- [ ] **4. Admin auth**
+  - [ ] `auth` module: email code + link, sessions, guard middleware, rate limit
+  - [ ] `notifications` module with the Resend client and the sign-in template
+  - [ ] Angular sign-in page + `canMatch` guard
+- [ ] **5. Admin UI**
+  - [ ] Quotations list with status filter
+  - [ ] Simple editor with live totals, preview, sessionStorage draft
+  - [ ] Services catalog and issuer profile pages
+- [ ] **6. Magic links + client page**
+  - [ ] `access` module: links (hashed, TTL), exchange endpoint, quotation sessions, revoke
+  - [ ] `/acceso` page with the "Ver cotización" button
+  - [ ] **`server-logic.ts` gate:** session check through `access/index.ts`, redirect to
+        `/acceso?q=<slug>`, `private, no-store` + `noindex` headers
+  - [ ] **`server-logic.ts` HTML strings:** expired / revoked / not-found pages
+  - [ ] Client page hydrates from `/api/q/:slug`
+- [ ] **7. SSG pipeline**
+  - [ ] `build` module: `/api/build/quotations` (build token), debounced deploy hook
+  - [ ] `getPrerenderParams` + `PrerenderFallback.Server` on `/q/:slug`
+  - [ ] **`server-logic.ts` asset vs SSR choice:** serve the prerendered file through
+        `env.ASSETS.fetch`, fall back to SSR when it isn't built yet
+  - [ ] Build succeeds when the API is unreachable (prerenders nothing)
+  - [ ] Workers Builds connected; publish triggers a rebuild
+- [ ] **8. Client actions**
+  - [ ] Accept / request changes / reject endpoints and status transitions
+  - [ ] Actions column (right on desktop, bottom on mobile) + dialogs
+  - [ ] Admin "Solicitudes" view; notification emails
+- [ ] **9. PDF**
+  - [ ] `pdf` module: pdf-lib renderer with embedded TTFs, matching the template
+  - [ ] R2 cache per version (`files` module); download button wired
+- [ ] **10. Deploy**
+  - [ ] `quotman.dasom.mx` custom domain; `dasom.mx` verified in Resend
+  - [ ] Secrets set; remote D1 migrations applied
+  - [ ] Smoke test: publish → email → open → request changes → republish → accept → PDF
 ---
 
 ## 10. Secrets and setup you'll provide

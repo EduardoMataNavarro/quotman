@@ -15,6 +15,18 @@ Angular 22 (standalone, signals, zoneless) with `@angular/ssr` · Tailwind CSS v
 Cloudflare Workers + Static Assets (one Worker) · D1 + Drizzle · R2 · pdf-lib + fontkit ·
 Resend. No NGXS: signals + `httpResource`, sessionStorage only for per-tab drafts.
 
+## Backend layout
+
+`backend/modules/<module>/` with one file per layer: `type`, `enum`, `dto`, `service`,
+`repository`, `model`, `client`, `routes`, plus `index.ts` as the public surface. Follow
+PLAN.md §8.1 for what each layer may import. In short: routes → service → repository →
+model; other modules only through their `index.ts`; enums are `as const` objects, not TS
+`enum`; the frontend may import only `dto`, `enum` and `type`.
+
+Worker entry: `src/server.ts` is scaffolding only (engine, Hono app, route wiring, `fetch`
+export). Page-serving logic and HTML string building go in `src/server-logic.ts`, which
+calls backend modules for domain rules instead of re-implementing them (PLAN.md §2).
+
 ## Rules that aren't obvious from the code
 
 - **Money is integer cents** (MXN). Every total comes from `shared/totals.ts`; the API,
