@@ -7,7 +7,7 @@ then accept, reject or request changes. Lives at `https://quotman.dasom.mx`.
 §9 tracks progress: tick a phase only when it's done and verified, and update the plan in
 the same change whenever a decision changes (add it to §12 with the date).
 
-Status: phase 1 (scaffold) done. Next up: phase 2 (document component).
+Status: phases 1–2 done. Next up: phase 3 (data + API).
 
 ## Commands
 
@@ -57,7 +57,8 @@ calls backend modules for domain rules instead of re-implementing them (PLAN.md 
 
 ## Design
 
-The visual base is `../quotations/cotizacion-onp.html` (silver sheet, grouped stages,
+The visual base is `../quotations/cotizacion-onp.html`, ported to
+`src/app/shared/ui/quotation-document/` and visible at `/muestra` (silver sheet, grouped stages,
 bracketed totals, sine-wave squares under the logo). Port it, don't redesign it.
 
 - Fonts: Raleway (headings, 600) and Finlandica Text (body), self-hosted via Fontsource on

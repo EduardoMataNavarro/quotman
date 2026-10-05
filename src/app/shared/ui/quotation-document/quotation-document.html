@@ -1,0 +1,96 @@
+@let v = view();
+<article class="window">
+  <div class="pane">
+    <header class="pane-top">
+      <h1>Cotización</h1>
+      <strong>{{ v.doc.folio }}</strong>
+    </header>
+
+    <div class="pane-grid">
+      <aside class="info">
+        <div class="brand">
+          <div class="brand-mark">
+            @if (v.doc.issuer.logoUrl; as logo) {
+              <img [src]="logo" [alt]="v.doc.issuer.name" />
+            }
+            <qm-sine-squares />
+          </div>
+          <h2>{{ v.doc.issuer.name }}</h2>
+          <div class="role">{{ v.doc.issuer.role }}</div>
+        </div>
+
+        <dl>
+          <dt>Correo</dt><dd>{{ v.doc.issuer.email }}</dd>
+          <dt>Teléfono</dt><dd>{{ v.doc.issuer.phone }}</dd>
+          <dt>Razón social</dt><dd>{{ v.doc.issuer.razonSocial }}</dd>
+          <dt>RFC</dt><dd>{{ v.doc.issuer.rfc }}</dd>
+          <dt>Ubicación</dt><dd>{{ v.doc.issuer.location }}</dd>
+          <dt>Fecha</dt><dd>{{ v.issuedOn }}</dd>
+        </dl>
+      </aside>
+
+      <section class="items">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Etapa</th>
+                <th>Concepto</th>
+                <th class="num">Cant.</th>
+                <th class="num">Precio Unitario</th>
+                <th class="num">Importe</th>
+              </tr>
+            </thead>
+            @for (stage of v.stages; track $index) {
+              <tbody>
+                @for (line of stage.lines; track line.id; let first = $first) {
+                  <tr>
+                    @if (first) {
+                      <td class="group" [attr.rowspan]="stage.lines.length">{{ stage.name }}</td>
+                    }
+                    <td>
+                      <div class="concept">{{ line.title }}</div>
+                      @if (line.description) {
+                        <div class="concept-desc">{{ line.description }}</div>
+                      }
+                    </td>
+                    <td class="num"><span class="qty">{{ line.qty }}</span></td>
+                    <td class="num">{{ line.unitPrice }}</td>
+                    <td class="num">{{ line.amount }}</td>
+                  </tr>
+                }
+              </tbody>
+            }
+            <tfoot>
+              <tr class="sum-sub">
+                <td colspan="4">Subtotal</td>
+                <td class="num">{{ v.subtotal }}</td>
+              </tr>
+              <tr class="sum-tax">
+                <td colspan="5">
+                  IVA <span class="muted">({{ v.taxRate }})</span>
+                  <qm-bracket-amount variant="tax">+{{ v.tax }}</qm-bracket-amount>
+                </td>
+              </tr>
+              <tr class="sum-total">
+                <td colspan="4">Total</td>
+                <td class="num"><qm-bracket-amount variant="total">{{ v.total }}</qm-bracket-amount></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      @if (v.doc.terms.length) {
+        <section class="terms">
+          <h2>Términos y condiciones</h2>
+          <ul>
+            @for (term of v.doc.terms; track $index) {
+              <li>{{ term }}</li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  </div>
+</article>

@@ -3,7 +3,7 @@
 A personal quotation app built on the visual style of `quotations/cotizacion-onp.html`
 (silver sheet, Raleway 600 headings, Finlandica Text body, grouped stages, bracketed totals).
 
-Status: **phase 1 (scaffold) done**; next is phase 2. Decisions from 2026-10-05 are folded in (§12).
+Status: **phases 1–2 done**; next is phase 3. Decisions from 2026-10-05 are folded in (§12).
 
 ---
 
@@ -446,13 +446,13 @@ when all its checkpoints are.
         `no-restricted-imports` rule keeping the frontend to `dto` / `enum` / `type`
   - [x] `wrangler.jsonc`: R2, assets with `run_worker_first: ["/q/*"]`
   - [x] `wrangler dev` serves an Angular page and `/api/health`
-- [ ] **2. Document component**
-  - [ ] Port `cotizacion-onp.html` to `<qm-quotation-document>` with a typed input
-  - [ ] `bracket-amount`, `sine-squares`, `download-button` as shared UI
-  - [ ] Renders the ONP quotation from a fixture, screen and print
+- [x] **2. Document component**
+  - [x] Port `cotizacion-onp.html` to `<qm-quotation-document>` with a typed input
+  - [x] `bracket-amount`, `sine-squares`, `download-button` as shared UI
+  - [x] Renders the ONP quotation from a fixture, screen and print
 - [ ] **3. Data + API**
   - [ ] Models + migrations for every table in §3; `core/db/schema.ts` re-exports them
-  - [ ] `shared/totals.ts` with unit tests
+  - [x] `shared/totals.ts` with unit tests (done in phase 2, with `shared/format.ts`)
   - [ ] Modules `catalog`, `clients`, `issuer`, `quotations` (all layers per §8.1), CRUD routes
   - [ ] Seed with the ONP quotation
 - [ ] **4. Admin auth**
@@ -545,3 +545,8 @@ when all its checkpoints are.
    multi-statement writes still go through `db.batch()`. Migrations: `npm run db:generate`,
    then `npm run db:migrate` against the branch in `.dev.vars`. Money stays integer cents
    (`integer`), timestamps are `timestamptz` exposed as ISO strings.
+10. **Phase 2 notes** — The document's input type is `QuotationDocument` in
+    `@api/quotations/quotations.type` (the `/api/q/:slug` payload). The ONP fixture lives in
+    `shared/fixtures/onp.ts` for the seed and the PDF comparison. `/muestra` (prerendered)
+    renders it and is the screen/print reference; the logo is `public/logo.png`
+    until the issuer logo moves to R2.

@@ -2,8 +2,9 @@
 @import '@fontsource-variable/raleway';
 @import '@fontsource-variable/finlandica-text';
 
-/* Tokens ported from quotations/cotizacion-onp.html. */
-@theme {
+/* Tokens ported from quotations/cotizacion-onp.html. `static` emits every token, because
+   component stylesheets read them as CSS variables Tailwind can't see. */
+@theme static {
   --color-mist: #edf6f7;
   --color-ice: #c6dbde;
   --color-slate: #48565a;
@@ -58,5 +59,26 @@
   h3 {
     @apply font-heading font-semibold;
     font-synthesis-weight: none;
+  }
+}
+
+/* A4 portrait: the page itself becomes the silver sheet. Solid gradient only, no
+   translucent layers (see quotation-document.css). */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: linear-gradient(170deg, #eceeef 0%, #e3e6e7 45%, #d6dadc 100%);
+  }
+
+  body {
+    min-height: 100vh;
+    padding: 10mm 8mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
