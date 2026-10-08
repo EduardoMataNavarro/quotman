@@ -1,0 +1,189 @@
+/* Layer order is set by PrimeNG's cssLayer option (app.config.ts):
+   theme, base, primeng, components, utilities. */
+@import 'tailwindcss';
+@import '@fontsource-variable/raleway';
+@import '@fontsource-variable/finlandica-text';
+@import './animations.css';
+
+/* `<html>.app-dark` is the one dark-mode switch (PrimeNG reads it too). */
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+/* Palette and type from the quotation template; surface ladder matches quotman-preset.ts.
+   `static`: the mirrored document component reads these as plain CSS variables. */
+@theme static {
+  --color-mist: #edf6f7;
+  --color-ice: #c6dbde;
+  --color-slate: #48565a;
+  --color-ink: #111416;
+  --color-void: #020506;
+  --color-silver-hi: #e3e6e7;
+  --color-silver-lo: #cdd2d4;
+  --color-rule: rgb(2 5 6 / 0.14);
+  --color-muted: rgb(72 86 90 / 0.85);
+
+  --color-surface-0: #ffffff;
+  --color-surface-50: hsl(190 8% 97%);
+  --color-surface-100: hsl(190 8% 94%);
+  --color-surface-200: hsl(190 8% 88%);
+  --color-surface-300: hsl(190 8% 80%);
+  --color-surface-400: hsl(190 8% 66%);
+  --color-surface-500: hsl(190 8% 52%);
+  --color-surface-600: hsl(190 8% 41%);
+  --color-surface-700: hsl(190 8% 31%);
+  --color-surface-800: hsl(190 8% 21%);
+  --color-surface-900: hsl(190 8% 12%);
+  --color-surface-950: hsl(190 8% 7%);
+
+  --color-primary-50: hsl(194 11% 96%);
+  --color-primary-100: hsl(194 11% 92%);
+  --color-primary-200: hsl(194 11% 84%);
+  --color-primary-500: hsl(194 11% 42%);
+  --color-primary-600: hsl(194 11% 32%);
+  --color-primary-700: hsl(194 11% 26%);
+  --color-primary-800: hsl(194 11% 20%);
+
+  --font-heading: 'Raleway Variable', 'Raleway', sans-serif;
+  --font-body: 'Finlandica Text Variable', 'Finlandica Text', system-ui, sans-serif;
+  --font-sans: var(--font-body);
+
+  /* Template type scale (used by the mirrored quotation document). */
+  --text-label: 13px;
+  --text-desc: 14px;
+  --text-stage: 15px;
+  --text-line: 16px;
+  --text-subtotal: 19px;
+  --text-tax: 25px;
+  --text-total: 33px;
+
+  --radius-control: 0.5rem;
+  --radius-chip: 0.75rem;
+  --radius-card: 10px;
+
+  /* The webapp's brushed-metal backdrop and silver pane; dark variants in ink/void. */
+  --background-image-brushed: linear-gradient(135deg, #f4f6f7 0%, #e1e5e7 25%, #cdd2d5 50%, #b9c0c4 75%, #a7afb4 100%);
+  --background-image-brushed-dark: linear-gradient(135deg, #2a3033 0%, #1b1f21 40%, #111416 70%, #020506 100%);
+  --background-image-pane: linear-gradient(180deg, var(--color-silver-hi), var(--color-silver-lo));
+  --background-image-pane-dark: linear-gradient(180deg, #1b2023, #111416);
+}
+
+@layer base {
+  html {
+    background-color: #cdd2d5;
+  }
+  html.app-dark {
+    background-color: var(--color-ink);
+  }
+
+  body {
+    @apply min-h-dvh bg-brushed bg-fixed font-body text-void antialiased dark:bg-brushed-dark dark:text-mist;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-heading font-semibold;
+    font-synthesis-weight: none;
+  }
+}
+
+/* House classes, named as in superadmin so its conventions read the same here. */
+@layer components {
+  .page-header {
+    @apply mb-6 flex items-center gap-3;
+  }
+  .page-header h1 {
+    @apply text-2xl text-void dark:text-mist;
+  }
+
+  /* The webapp's silver sheet: pane gradient, hairline edge, the window's soft drop shadow. */
+  .silver-pane,
+  .card-section {
+    @apply bg-pane dark:bg-pane-dark;
+    box-shadow:
+      0 24px 48px -20px rgb(2 5 6 / 0.28),
+      0 0 0 1px rgb(237 246 247 / 0.6);
+  }
+  .app-dark .silver-pane,
+  .app-dark .card-section {
+    box-shadow:
+      0 24px 48px -20px rgb(0 0 0 / 0.6),
+      0 0 0 1px rgb(237 246 247 / 0.08);
+  }
+
+  .card-section {
+    @apply rounded-card p-6;
+  }
+
+  .field-group {
+    @apply flex flex-col gap-1.5;
+  }
+  .field-label {
+    @apply text-sm font-medium text-ink dark:text-ice;
+  }
+  .field-hint {
+    @apply text-xs text-muted dark:text-ice/70;
+  }
+  .field-error {
+    @apply text-sm text-red-700 dark:text-red-400;
+  }
+
+  .btn-primary,
+  .btn-neutral {
+    @apply inline-flex items-center justify-center gap-2 rounded-control px-4 py-2.5 font-heading text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-void text-mist hover:bg-ink dark:bg-mist dark:text-void dark:hover:bg-ice;
+  }
+  .btn-primary {
+    box-shadow: 0 8px 20px -10px rgb(2 5 6 / 0.5);
+  }
+  .btn-neutral {
+    @apply border border-rule bg-mist/60 text-ink hover:bg-mist dark:border-mist/15 dark:bg-ink dark:text-mist dark:hover:bg-void;
+  }
+
+  /* Shell chrome: silver panes on the brushed backdrop, separated by the template's rule. */
+  .shell-sidebar {
+    @apply border-r border-rule bg-pane dark:border-mist/10 dark:bg-pane-dark;
+    transition: width 200ms var(--ease-standard);
+  }
+  .shell-topbar {
+    @apply border-b border-rule bg-pane dark:border-mist/10 dark:bg-pane-dark;
+  }
+  .sidebar-handle {
+    @apply absolute top-5 right-0 z-10 hidden size-4 translate-x-1/2 items-center justify-center rounded-full bg-silver-hi text-slate shadow ring-1 ring-rule hover:bg-mist lg:flex dark:bg-ink dark:text-ice dark:ring-mist/15 dark:hover:bg-void;
+  }
+  .nav-item {
+    @apply flex items-center gap-3 rounded-control px-3 py-2 text-sm font-medium text-ink transition-colors dark:text-ice;
+  }
+  .nav-item:not(.nav-active):hover {
+    @apply bg-mist/50 dark:bg-mist/5;
+  }
+  .nav-icon {
+    @apply size-5 shrink-0 text-slate dark:text-ice/70;
+  }
+  .nav-active {
+    @apply bg-void text-mist dark:bg-mist dark:text-void;
+  }
+  .nav-active .nav-icon {
+    @apply text-ice dark:text-slate;
+  }
+
+  /* Chrome icon buttons: circles (the one place a full radius is allowed). */
+  .topbar-action {
+    @apply inline-flex size-9 items-center justify-center rounded-full border-2 border-rule text-slate transition-colors hover:bg-mist/60 dark:border-mist/15 dark:text-ice dark:hover:bg-mist/5;
+  }
+
+  .menu-item {
+    @apply flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-ink transition-colors hover:bg-surface-100 dark:text-surface-100 dark:hover:bg-surface-800;
+  }
+  .branding-input {
+    @apply rounded-control border border-rule bg-mist/70 px-3 py-2 text-sm text-ink outline-none focus:border-slate dark:border-mist/15 dark:bg-void dark:text-mist dark:focus:border-ice;
+  }
+  .branding-code {
+    @apply w-full font-mono text-xs leading-relaxed;
+  }
+
+  .menu-item-danger {
+    @apply text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30;
+  }
+}

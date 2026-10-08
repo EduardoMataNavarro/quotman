@@ -1,0 +1,47 @@
+/* Motion tokens for Angular's animate.enter / animate.leave, as in superadmin's
+   animations.scss. Everything collapses under prefers-reduced-motion. */
+:root {
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+}
+
+@keyframes qm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes qm-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes qm-page-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes qm-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes qm-drawer-out {
+  from { transform: none; }
+  to { transform: translateX(-100%); }
+}
+
+.anim-fade-enter { animation: qm-fade-in var(--dur-fast) var(--ease-standard); }
+.anim-leave { animation: qm-fade-out var(--dur-fast) var(--ease-standard); }
+.anim-page-enter { animation: qm-page-in var(--dur-base) var(--ease-standard); }
+.anim-drawer-enter { animation: qm-drawer-in var(--dur-base) var(--ease-standard); }
+.anim-drawer-leave { animation: qm-drawer-out var(--dur-fast) var(--ease-standard); }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-enter,
+  .anim-leave,
+  .anim-page-enter,
+  .anim-drawer-enter,
+  .anim-drawer-leave {
+    animation: none;
+  }
+  .shell-sidebar {
+    transition: none;
+  }
+}

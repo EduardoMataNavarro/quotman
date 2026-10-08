@@ -1,0 +1,90 @@
+<header class="page-header">
+  <h1>Marca</h1>
+</header>
+
+@if (loading()) {
+  <p class="text-sm text-muted dark:text-ice/70" role="status">Cargando…</p>
+} @else {
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <div class="flex flex-col gap-6">
+      <section class="card-section flex flex-col gap-4" aria-labelledby="page-heading">
+        <h2 id="page-heading" class="text-lg">Fondo de la página</h2>
+
+        <label class="flex items-center gap-2 text-sm font-medium text-ink dark:text-ice">
+          <input
+            type="checkbox"
+            class="size-4 accent-void dark:accent-mist"
+            [checked]="!!page().gradient"
+            (change)="toggleGradient('page', $any($event.target).checked)"
+          />
+          Usar degradado
+        </label>
+        @if (page().gradient; as gradient) {
+          <qm-gradient-picker idPrefix="page" [value]="gradient" (changed)="setGradient('page', $event)" />
+        }
+
+        <div class="field-group">
+          <label class="field-label" for="page-css">CSS adicional</label>
+          <textarea
+            id="page-css"
+            class="branding-input branding-code"
+            rows="4"
+            spellcheck="false"
+            [value]="page().css"
+            (input)="setCss('page', $any($event.target).value)"
+          ></textarea>
+          <p class="field-hint">Se aplica después del degradado: fondo, borde y sombra. Vacío y sin degradado usa el fondo de la plantilla.</p>
+        </div>
+      </section>
+
+      <section class="card-section flex flex-col gap-4" aria-labelledby="sheet-heading">
+        <h2 id="sheet-heading" class="text-lg">Hoja de la cotización</h2>
+
+        <label class="flex items-center gap-2 text-sm font-medium text-ink dark:text-ice">
+          <input
+            type="checkbox"
+            class="size-4 accent-void dark:accent-mist"
+            [checked]="!!sheet().gradient"
+            (change)="toggleGradient('sheet', $any($event.target).checked)"
+          />
+          Usar degradado
+        </label>
+        @if (sheet().gradient; as gradient) {
+          <qm-gradient-picker idPrefix="sheet" [value]="gradient" (changed)="setGradient('sheet', $event)" />
+        }
+
+        <div class="field-group">
+          <label class="field-label" for="sheet-css">CSS adicional</label>
+          <textarea
+            id="sheet-css"
+            class="branding-input branding-code"
+            rows="4"
+            spellcheck="false"
+            [value]="sheet().css"
+            (input)="setCss('sheet', $any($event.target).value)"
+          ></textarea>
+          <p class="field-hint">Se aplica después del degradado: fondo, borde y sombra. Vacío y sin degradado usa la hoja plateada de la plantilla. Los destellos y la textura de la plantilla siempre quedan encima.</p>
+        </div>
+      </section>
+
+      @if (error(); as msg) {
+        <p class="field-error" role="alert">{{ msg }}</p>
+      }
+
+      <div class="flex flex-wrap justify-end gap-2">
+        <button type="button" class="btn-neutral" (click)="reset()">Usar la plantilla</button>
+        <button type="button" class="btn-primary" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+
+    <section aria-label="Vista previa" class="min-w-0">
+      <div class="preview-page" [class.preview-page-default]="!pageCss()" [attr.style]="pageCss() || null">
+        <div class="preview-scale">
+          <qm-quotation-document [document]="preview()" />
+        </div>
+      </div>
+    </section>
+  </div>
+}

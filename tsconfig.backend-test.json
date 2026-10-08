@@ -1,9 +1,0 @@
-/* Backend and shared tests: run by Vitest in Node. */
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "types": ["node", "@cloudflare/workers-types"],
-    "lib": ["ES2023"]
-  },
-  "include": ["backend/**/*.ts", "shared/**/*.ts", "vitest.backend.config.ts"]
-}

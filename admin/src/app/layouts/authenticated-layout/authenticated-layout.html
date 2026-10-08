@@ -1,0 +1,95 @@
+<div class="flex h-dvh">
+  <!-- Desktop sidebar: collapsible into an icon rail (w-64 ⇄ w-20). -->
+  <aside
+    class="shell-sidebar relative z-20 hidden shrink-0 flex-col lg:flex"
+    [class.w-64]="!sidebarCollapsed()"
+    [class.w-20]="sidebarCollapsed()"
+    aria-label="Navegación principal"
+  >
+    <qm-sidebar [collapsed]="sidebarCollapsed()" />
+  </aside>
+
+  <!-- Mobile drawer -->
+  @if (drawerOpen()) {
+    <div
+      class="fixed inset-0 z-40 bg-surface-950/50 lg:hidden"
+      animate.enter="anim-fade-enter"
+      animate.leave="anim-leave"
+      (click)="drawerOpen.set(false)"
+      aria-hidden="true"
+    ></div>
+    <aside
+      class="shell-sidebar fixed inset-y-0 left-0 z-50 flex w-72 max-w-11/12 flex-col shadow-xl lg:hidden"
+      animate.enter="anim-drawer-enter"
+      animate.leave="anim-drawer-leave"
+      aria-label="Navegación principal"
+    >
+      <qm-sidebar (closed)="drawerOpen.set(false)" />
+    </aside>
+  }
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header
+      class="shell-topbar relative z-10 flex h-14 shrink-0 items-center gap-3 px-4 sm:px-6"
+    >
+      <button type="button" class="topbar-action lg:hidden" (click)="drawerOpen.set(true)" aria-label="Abrir menú">
+        <svg lucideMenu class="size-4" aria-hidden="true"></svg>
+      </button>
+
+      <div class="flex-1"></div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="topbar-action"
+          (click)="toggleDark()"
+          [attr.aria-label]="themeLabel()"
+          [title]="themeLabel()"
+        >
+          @if (darkMode()) {
+            <svg lucideSun class="size-4" aria-hidden="true"></svg>
+          } @else {
+            <svg lucideMoon class="size-4" aria-hidden="true"></svg>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="topbar-action"
+          (click)="userMenu.toggle($event)"
+          aria-haspopup="true"
+          [attr.aria-label]="accountLabel()"
+          [title]="accountLabel()"
+        >
+          <svg lucideUserRound class="size-4" aria-hidden="true"></svg>
+        </button>
+      </div>
+
+      <p-popover #userMenu appendTo="body">
+        <div class="w-64 py-1.5">
+          <div class="border-b border-surface-200 px-4 py-3 dark:border-surface-800">
+            <p class="truncate text-sm font-medium text-ink dark:text-mist">{{ me()?.email }}</p>
+            <p class="mt-0.5 text-xs text-surface-500 dark:text-surface-400">Administrador</p>
+          </div>
+          <button type="button" class="menu-item" (click)="userMenu.hide(); changingPassword.set(true)">
+            <svg lucideKeyRound class="size-4" aria-hidden="true"></svg>
+            Cambiar contraseña
+          </button>
+          <button type="button" class="menu-item menu-item-danger" (click)="logout()">
+            <svg lucideLogOut class="size-4" aria-hidden="true"></svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </p-popover>
+    </header>
+
+    <!-- Single scroll region -->
+    <main #scrollContainer id="main-content" class="flex-1 overflow-y-auto" tabindex="-1">
+      <div class="anim-page-enter w-full px-4 py-6 sm:px-6 md:px-8">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+</div>
+
+<qm-change-password-dialog [(visible)]="changingPassword" />

@@ -1,9 +1,0 @@
-# Copy to .dev.vars (git-ignored) for `wrangler dev`. Production values go through
-# `npx wrangler secret put <NAME>`, never into a file in the repo.
-ENVIRONMENT=development
-DATABASE_URL=
-RESEND_API_KEY=
-SESSION_SECRET=
-ADMIN_EMAIL=
-BUILD_TOKEN=
-DEPLOY_HOOK_URL=

@@ -1,0 +1,57 @@
+<div class="flex flex-col gap-3">
+  <div class="h-10 rounded-control border border-rule" [style.background]="swatch()" aria-hidden="true"></div>
+
+  <div class="field-group">
+    <label class="field-label" [for]="idPrefix() + '-angle'">Ángulo (grados)</label>
+    <input
+      [id]="idPrefix() + '-angle'"
+      class="branding-input w-24"
+      type="number"
+      min="0"
+      max="360"
+      [value]="value().angle"
+      (input)="setAngle($any($event.target).value)"
+    />
+  </div>
+
+  <fieldset class="flex flex-col gap-2">
+    <legend class="field-label mb-1.5">Colores</legend>
+    @for (stop of value().stops; track $index; let i = $index) {
+      <div class="flex items-center gap-2">
+        <input
+          type="color"
+          class="h-9 w-12 cursor-pointer rounded-control border border-rule bg-transparent"
+          [value]="stop.color"
+          (input)="setColor(i, $any($event.target).value)"
+          [attr.aria-label]="'Color ' + (i + 1)"
+        />
+        <input
+          type="number"
+          class="branding-input w-20"
+          min="0"
+          max="100"
+          [value]="stop.position"
+          (input)="setPosition(i, $any($event.target).value)"
+          [attr.aria-label]="'Posición del color ' + (i + 1) + ' en porcentaje'"
+        />
+        <span class="text-sm text-muted dark:text-ice/70">%</span>
+        <button
+          type="button"
+          class="topbar-action size-8"
+          (click)="removeStop(i)"
+          [disabled]="!canRemove()"
+          [attr.aria-label]="'Quitar color ' + (i + 1)"
+        >
+          <svg lucideTrash2 class="size-4" aria-hidden="true"></svg>
+        </button>
+      </div>
+    }
+  </fieldset>
+
+  <div>
+    <button type="button" class="btn-neutral" (click)="addStop()" [disabled]="!canAdd()">
+      <svg lucidePlus class="size-4" aria-hidden="true"></svg>
+      Agregar color
+    </button>
+  </div>
+</div>

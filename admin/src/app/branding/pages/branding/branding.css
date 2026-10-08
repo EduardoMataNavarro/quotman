@@ -1,0 +1,21 @@
+/* The preview stands in for the client page: a framed area with the page background and
+   the sheet scaled down so the whole document fits beside the form. */
+.preview-page {
+  position: sticky;
+  top: 0;
+  border-radius: var(--radius-card);
+  padding: 24px 16px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--color-rule);
+}
+.preview-page-default {
+  background-image: var(--background-image-brushed);
+}
+.preview-scale {
+  zoom: 0.62;
+}
+@media (max-width: 1279px) {
+  .preview-scale {
+    zoom: 0.5;
+  }
+}

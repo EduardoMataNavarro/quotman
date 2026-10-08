@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quotman-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // More specific than the frontend's and the admin's /* routes, so /api/* lands here
+  // directly on both hosts. The admin calls its own host's /api: same origin, host-only
+  // cookie, no CORS.
+  "routes": [
+    { "pattern": "quotman.dasom.mx/api/*", "zone_name": "dasom.mx" },
+    { "pattern": "admin-quotman.dasom.mx/api/*", "zone_name": "dasom.mx" }
+  ],
+  "observability": { "enabled": true },
+
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "quotman-files" }],
+
+  "vars": {
+    "ENVIRONMENT": "production",
+    "APP_URL": "https://quotman.dasom.mx",
+    "ADMIN_HOST": "admin-quotman.dasom.mx"
+  }
+  // Secrets (wrangler secret put / .dev.vars): DATABASE_URL, RESEND_API_KEY,
+  // SESSION_SECRET, BUILD_TOKEN, DEPLOY_HOOK_URL, ISSUER_NAME, ISSUER_ROLE, ISSUER_EMAIL,
+  // ISSUER_PHONE, ISSUER_RAZON_SOCIAL, ISSUER_RFC, ISSUER_LOCATION
+}

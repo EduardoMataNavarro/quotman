@@ -1,0 +1,17 @@
+# Copy to .dev.vars (git-ignored) for `wrangler dev`. Production values go through
+# `npx wrangler secret put <NAME>`, never into a file in the repo.
+ENVIRONMENT=development
+DATABASE_URL=
+RESEND_API_KEY=
+SESSION_SECRET=
+BUILD_TOKEN=
+DEPLOY_HOOK_URL=
+# Issuer details, copied into the issuer profile once (first read, empty table).
+# Production: `npx wrangler secret put ISSUER_NAME` and so on. The logo URL is set in the admin.
+ISSUER_NAME=
+ISSUER_ROLE=
+ISSUER_EMAIL=
+ISSUER_PHONE=
+ISSUER_RAZON_SOCIAL=
+ISSUER_RFC=
+ISSUER_LOCATION=

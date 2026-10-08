@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quotman-admin",
+  "main": "dist/server/server.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // admin-quotman.dasom.mx/api/* is routed to quotman-api (more specific), so the admin
+  // calls the API on its own origin: host-only HttpOnly cookie, no CORS.
+  "routes": [{ "pattern": "admin-quotman.dasom.mx/*", "zone_name": "dasom.mx" }],
+  "observability": { "enabled": true },
+
+  "assets": {
+    "directory": "dist/browser",
+    "binding": "ASSETS"
+  }
+}
