@@ -433,7 +433,7 @@ admin/                      quotman-admin: the admin app (mirrors superadmin's l
    │  ├─ state/                 NGXS: app/, auth/
    │  ├─ server.ts              Worker entry (every route client-rendered)
    │  └─ styles.css, animations.css
-   ├─ proxy.conf.json       ng serve (:4300): /api → 127.0.0.1:8787
+   ├─ proxy.conf.json       ng serve (:4201): /api → 127.0.0.1:8787
    ├─ wrangler.jsonc        quotman-admin, route admin-quotman.dasom.mx/*
    └─ package.json, tsconfig*.json, eslint.config.js, .prettierrc
 ```

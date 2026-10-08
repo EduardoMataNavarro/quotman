@@ -24,7 +24,7 @@ its own folder. Copy `backend/.dev.vars.example` to `backend/.dev.vars` once.
 
 - `cd backend && npm run dev`: API Worker on :8787.
 - `cd frontend && npm start`: client app on :4200, proxying `/api` to :8787.
-- `cd admin && npm start`: admin on :4300, proxying `/api` to :8787.
+- `cd admin && npm start`: admin on :4201, proxying `/api` to :8787.
 - `cd frontend && npm run dev:workers`: client Worker + API Worker together with the `API`
   service binding (to check the `/q/*` gate and SSR against the API).
 - Backend DB: `npm run db:generate` after changing a model, then `npm run db:migrate`.
