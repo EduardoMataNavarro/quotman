@@ -1,54 +1,66 @@
-<!-- Wordmark row, level with the topbar strip and sharing its hairline rule. -->
+<!-- Wordmark row, level with the toolbar. -->
 <div
-  class="flex h-14 shrink-0 items-center border-b border-rule dark:border-mist/10"
+  class="shell-panel flex h-14 shrink-0 items-center border-b"
   [class.gap-2]="!collapsed()"
   [class.px-4]="!collapsed()"
   [class.justify-center]="collapsed()"
 >
   @if (!collapsed()) {
-    <p class="font-heading text-lg font-semibold text-void dark:text-mist">Quotman</p>
-    <p class="mt-0.5 text-xs font-medium text-muted dark:text-ice/70">Admin</p>
+    <p class="font-heading text-lg font-semibold">Quotman</p>
+    <p-tag value="Admin" severity="secondary" />
     <div class="flex-1"></div>
   } @else {
-    <p class="font-heading text-lg font-semibold text-void dark:text-mist" aria-hidden="true">Q</p>
+    <p class="font-heading text-lg font-semibold" aria-hidden="true">Q</p>
   }
-  <button type="button" class="topbar-action lg:hidden" (click)="closed.emit()" aria-label="Cerrar menú">
-    <svg lucideX class="size-5" aria-hidden="true"></svg>
-  </button>
+  <p-button
+    styleClass="lg:hidden"
+    [text]="true"
+    [rounded]="true"
+    severity="secondary"
+    (onClick)="closed.emit()"
+    ariaLabel="Cerrar menú"
+  >
+    <svg lucideX class="size-4" aria-hidden="true"></svg>
+  </p-button>
 </div>
 
-<!-- Floating collapse handle straddling the panel's right edge; desktop only. -->
-<button
-  type="button"
-  class="sidebar-handle"
-  (click)="toggleCollapse()"
-  [attr.aria-label]="collapsed() ? 'Expandir menú' : 'Contraer menú'"
-  [attr.aria-expanded]="!collapsed()"
+<!-- Collapse handle straddling the panel's right edge; desktop only. -->
+<p-button
+  styleClass="absolute! top-4 right-0 z-10 hidden! size-6! translate-x-1/2 p-0! lg:inline-flex!"
+  [rounded]="true"
+  [outlined]="true"
+  severity="secondary"
+  size="small"
+  (onClick)="toggleCollapse()"
+  [ariaLabel]="collapsed() ? 'Expandir menú' : 'Contraer menú'"
 >
   @if (collapsed()) {
     <svg lucideChevronRight class="size-3" aria-hidden="true"></svg>
   } @else {
     <svg lucideChevronLeft class="size-3" aria-hidden="true"></svg>
   }
-</button>
+</p-button>
 
 <nav class="flex-1 overflow-y-auto px-3 py-3" aria-label="Secciones">
   <ul class="flex flex-col gap-1">
     @for (item of items; track item.route) {
       <li>
         <a
-          class="nav-item"
-          [class.justify-center]="collapsed()"
+          pButton
+          severity="secondary"
+          class="w-full"
+          [class.justify-start!]="!collapsed()"
+          [text]="!isActive(item.route)"
           [routerLink]="item.route"
-          routerLinkActive="nav-active"
-          ariaCurrentWhenActive="page"
+          [attr.aria-current]="isActive(item.route) ? 'page' : null"
           [attr.aria-label]="collapsed() ? item.label : null"
-          [title]="collapsed() ? item.label : ''"
+          [pTooltip]="collapsed() ? item.label : ''"
+          tooltipPosition="right"
           (click)="closed.emit()"
         >
-          <svg [lucideIcon]="item.icon" class="nav-icon" aria-hidden="true"></svg>
+          <svg [lucideIcon]="item.icon" class="size-5 shrink-0" aria-hidden="true"></svg>
           @if (!collapsed()) {
-            <span class="flex-1">{{ item.label }}</span>
+            <span>{{ item.label }}</span>
           }
         </a>
       </li>

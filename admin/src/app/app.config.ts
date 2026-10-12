@@ -10,13 +10,13 @@ import { withNgxsReduxDevtoolsPlugin } from '@ngxs/devtools-plugin';
 import { withNgxsLoggerPlugin } from '@ngxs/logger-plugin';
 import { withNgxsStoragePlugin } from '@ngxs/storage-plugin';
 import { provideStore } from '@ngxs/store';
+import Aura from '@primeuix/themes/aura';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { AppState } from '../state/app/app.state';
 import { AuthState } from '../state/auth/auth.state';
 import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
-import { QuotmanPreset } from './theme/quotman-preset';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,13 +27,14 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       ripple: false,
       theme: {
-        preset: QuotmanPreset,
+        // Stock Aura: the admin uses PrimeNG's default look.
+        preset: Aura,
         options: {
           // `<html>.app-dark` is the one dark-mode switch: Tailwind's `dark:` variant and
           // PrimeNG both read it.
           darkModeSelector: '.app-dark',
           // Aura in its own layer, after Tailwind's base, so preflight never wipes
-          // component borders and our component classes win without !important.
+          // component borders and Tailwind utilities still win without !important.
           cssLayer: { name: 'primeng', order: 'theme, base, primeng, components, utilities' },
         },
       },

@@ -1,5 +1,9 @@
 import { Component, computed, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { LucidePlus, LucideTrash2 } from '@lucide/angular';
+import { ButtonModule } from 'primeng/button';
+import { ColorPickerModule } from 'primeng/colorpicker';
+import { InputTextModule } from 'primeng/inputtext';
 import { gradientDeclaration, type BrandingGradient } from '../../../shared/quotation/branding-css';
 
 const MAX_STOPS = 8;
@@ -11,7 +15,8 @@ const MIN_STOPS = 2;
  */
 @Component({
   selector: 'qm-gradient-picker',
-  imports: [LucidePlus, LucideTrash2],
+  imports: [FormsModule, ButtonModule, ColorPickerModule, InputTextModule, LucidePlus, LucideTrash2],
+  styles: '.swatch { border-color: var(--p-content-border-color); }',
   templateUrl: './gradient-picker.html',
 })
 export class GradientPicker {
@@ -28,7 +33,10 @@ export class GradientPicker {
     if (Number.isFinite(n)) this.emit({ angle: Math.min(360, Math.max(0, n)) });
   }
 
-  protected setColor(index: number, color: string): void {
+  /** PrimeNG's picker emits hex; the API wants `#rrggbb`. */
+  protected setColor(index: number, raw: string): void {
+    const color = `#${raw.replace(/^#/, '').toLowerCase()}`;
+    if (!/^#[0-9a-f]{6}$/.test(color)) return;
     this.emit({ stops: this.value().stops.map((s, i) => (i === index ? { ...s, color } : s)) });
   }
 

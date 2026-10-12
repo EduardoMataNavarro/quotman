@@ -103,9 +103,9 @@ answers instead of re-implementing them.
 
 The visual base is `../quotations/cotizacion-onp.html`, ported to
 `shared/ui/quotation-document/` in both apps (silver sheet, grouped sections, bracketed
-totals, sine-wave squares under the logo). Port it, don't redesign it. The admin uses the
-same look (brushed backdrop, silver panes) on top of PrimeNG Aura with `QuotmanPreset`, plus
-a dark mode.
+totals, sine-wave squares under the logo). Port it, don't redesign it. The admin is
+**stock PrimeNG** (Aura, no preset, PrimeNG components for every control, no house
+component classes) on the brushed-metal backdrop, plus a dark mode.
 
 - Fonts: Raleway (headings, 600) and Finlandica Text (body), self-hosted via Fontsource on
   the web; static TTFs for the PDF.

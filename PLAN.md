@@ -12,7 +12,7 @@ Status: **phases 1–3 done**; next is phase 4. Decisions from 2026-10-05 are fo
 | Layer | Choice | Version checked (2026-10-05) |
 |---|---|---|
 | Client app (`frontend/`) | Angular, standalone components, signals, zoneless | 22.2 |
-| Admin app (`admin/`) | Mirrors superadmin: Angular + PrimeNG (Aura, `QuotmanPreset`) + NGXS + Lucide, zoneless. Pinned to 21 because PrimeNG 22 moved to a paid license; 21 is MIT | 21.2 / 21.1 / 21.0 |
+| Admin app (`admin/`) | Mirrors superadmin: Angular + PrimeNG (stock Aura) + NGXS + Lucide, zoneless. Pinned to 21 because PrimeNG 22 moved to a paid license; 21 is MIT | 21.2 / 21.1 / 21.0 |
 | Rendering | `@angular/ssr`: SSG for quotation pages, SSR fallback; the admin renders every route client-side | 22.2 |
 | Styling | Tailwind CSS v4 (CSS-first `@theme` tokens) | 4.3 |
 | State | Client app: signals + `httpResource`. Admin: NGXS, as in superadmin (§6) | — |
@@ -284,9 +284,9 @@ Desktop (≥ 1024px)                                Mobile
 
 Its own Angular app in `admin/`, mirroring superadmin's structure and conventions (folder
 layout, NGXS state, PrimeNG components, `p-table` lists, Lucide icons, guards and
-interceptor, shell with collapsible sidebar and topbar) in the webapp's visual style:
-brushed-metal backdrop, silver panes, the template's palette and fonts. Dark mode toggle
-kept from superadmin (ink/void variant).
+interceptor, shell with collapsible sidebar and topbar). The UI is **stock PrimeNG** (Aura,
+no custom preset, PrimeNG components for every control) on the webapp's brushed-metal
+backdrop and fonts. Dark mode toggle kept from superadmin (Aura dark + ink/void backdrop).
 
 - **Cotizaciones**: list (folio with revision, client, total, status, valid until), status
   filter (archived only on request); create / duplicate / archive / unarchive / delete draft.
@@ -380,9 +380,10 @@ verified in Resend (SPF/DKIM records on Cloudflare DNS).
   buttons can.
 - Reusable pieces: `quotation-document`, `bracket-amount`, `sine-squares`,
   `download-button`, `quotation-actions`, `action-dialog`.
-- **Admin:** PrimeNG Aura with `QuotmanPreset` (primary = slate family, cool neutral
-  surfaces) for components; the shell, cards and login use the template's brushed backdrop
-  and silver panes (`silver-pane`, `card-section`), with ink/void dark variants.
+- **Admin:** stock PrimeNG Aura, no preset and no house component classes: cards, buttons,
+  inputs, menus, toolbar, drawer and dialogs are PrimeNG's own. Only the page backdrop
+  (brushed metal, ink/void in dark mode) and the fonts come from the template. Sole local
+  class: `shell-panel` (sidebar surface, from PrimeNG's `--p-content-*` variables).
 
 ---
 
@@ -428,8 +429,7 @@ admin/                      quotman-admin: the admin app (mirrors superadmin's l
    │  │  ├─ quotations/ clients/ service-catalog/ profile/ branding/   one folder per area
    │  │  ├─ guards/ interceptors/ services/http/ data/dtos/ model/constants/
    │  │  ├─ shared/quotation/   totals, format, dates, QuotationDocument, fixtures (MIRRORED)
-   │  │  ├─ shared/ui/          quotation-document, bracket-amount, sine-squares (MIRRORED)
-   │  │  └─ theme/quotman-preset.ts
+   │  │  └─ shared/ui/          quotation-document, bracket-amount, sine-squares (MIRRORED)
    │  ├─ state/                 NGXS: app/, auth/
    │  ├─ server.ts              Worker entry (every route client-rendered)
    │  └─ styles.css, animations.css
@@ -574,7 +574,7 @@ when all its checkpoints are.
   - [x] `auth` module: admins, password login, HttpOnly cookie sessions, guard middleware
   - [x] `admin:create` CLI
   - [x] `admin/` app mirroring superadmin: shell, sidebar, login, `authGuard` / `guestGuard`,
-        interceptor, change-password dialog, dark mode, webapp visual style
+        interceptor, change-password dialog, dark mode, stock PrimeNG UI
   - [ ] Login rate limit (Workers Rate Limiting binding)
   - [x] Admin API answers only on the admin host (404 elsewhere, outside development)
 - [ ] **5. Admin UI**
@@ -732,3 +732,12 @@ when all its checkpoints are.
     secrets, then edited in the admin; an invalid or incomplete seed is skipped (logged by
     field name only). The logo is an https URL entered in the admin. Personal data was
     removed from the git history (rewritten and force-pushed). `c.get('modules')` stays.
+16. **Admin UI is stock PrimeNG** (2026-10-08). Every admin screen uses default PrimeNG
+    (Aura, no `QuotmanPreset`) and PrimeNG components; the brushed-metal backdrop stays.
+    The login is a single card (the dark brand panel is gone). The admin dev server runs
+    on :4201.
+17. **Login primary and branding preview** (2026-10-11). The admin login page uses a black
+    primary (zinc-950; zinc-50 in dark mode), scoped to that page by overriding Aura's
+    component tokens; no preset, the rest of the admin stays stock. The /branding preview
+    shows the ONP sample with every price at $0.00 (the mirrored fixture keeps its prices
+    for the totals tests).

@@ -2,7 +2,9 @@ import { Component, inject, model, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 import { ChangePassword } from '../../../../state/auth/auth.actions';
 import { errorMessage } from '../../../data/utils/error-message';
@@ -10,7 +12,7 @@ import { errorMessage } from '../../../data/utils/error-message';
 /** Changing the password keeps this session and signs out every other one (API rule). */
 @Component({
   selector: 'qm-change-password-dialog',
-  imports: [ReactiveFormsModule, DialogModule, PasswordModule],
+  imports: [ReactiveFormsModule, ButtonModule, DialogModule, MessageModule, PasswordModule],
   templateUrl: './change-password-dialog.html',
 })
 export class ChangePasswordDialog {

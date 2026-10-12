@@ -1,9 +1,14 @@
 import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { LucideKeyRound, LucideLogOut, LucideMenu, LucideMoon, LucideSun, LucideUserRound } from '@lucide/angular';
+import { LucideMenu, LucideMoon, LucideSun, LucideUserRound } from '@lucide/angular';
 import { select, Store } from '@ngxs/store';
-import { PopoverModule } from 'primeng/popover';
+import type { MenuItem } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { DrawerModule } from 'primeng/drawer';
+import { MenuModule } from 'primeng/menu';
+import { ToolbarModule } from 'primeng/toolbar';
+import { TooltipModule } from 'primeng/tooltip';
 import { filter } from 'rxjs/operators';
 import { SetDarkMode } from '../../../state/app/app.actions';
 import { AppState } from '../../../state/app/app.state';
@@ -16,13 +21,15 @@ import { Sidebar } from '../components/sidebar/sidebar';
   selector: 'qm-authenticated-layout',
   imports: [
     RouterOutlet,
-    PopoverModule,
+    ButtonModule,
+    DrawerModule,
+    MenuModule,
+    ToolbarModule,
+    TooltipModule,
     LucideMenu,
     LucideSun,
     LucideMoon,
-    LucideLogOut,
     LucideUserRound,
-    LucideKeyRound,
     ChangePasswordDialog,
     Sidebar,
   ],
@@ -41,6 +48,17 @@ export class AuthenticatedLayout {
 
   protected drawerOpen = signal(false);
   protected changingPassword = signal(false);
+
+  /** Account menu: the signed-in email heads the group. */
+  protected accountItems = computed<MenuItem[]>(() => [
+    {
+      label: this.me()?.email ?? 'Administrador',
+      items: [
+        { label: 'Cambiar contraseña', command: () => this.changingPassword.set(true) },
+        { label: 'Cerrar sesión', command: () => this.logout() },
+      ],
+    },
+  ]);
 
   /** <main> is the scroll region, not the window: reset it on every route change. */
   private scrollContainer = viewChild<ElementRef<HTMLElement>>('scrollContainer');

@@ -1,81 +1,50 @@
-<header class="page-header">
-  <h1>Marca</h1>
-</header>
+<h1 class="page-title">Marca</h1>
 
 @if (loading()) {
-  <p class="text-sm text-muted dark:text-ice/70" role="status">Cargando…</p>
+  <p-progress-spinner styleClass="size-8!" strokeWidth="4" ariaLabel="Cargando" />
 } @else {
   <div class="grid gap-6 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
     <div class="flex flex-col gap-6">
-      <section class="card-section flex flex-col gap-4" aria-labelledby="page-heading">
-        <h2 id="page-heading" class="text-lg">Fondo de la página</h2>
+      @for (surface of surfaces; track surface.key) {
+        <p-card [header]="surface.title">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2">
+              <p-checkbox
+                [inputId]="surface.key + '-use-gradient'"
+                [binary]="true"
+                [ngModel]="!!state(surface.key).gradient"
+                (ngModelChange)="toggleGradient(surface.key, $event)"
+              />
+              <label [for]="surface.key + '-use-gradient'">Usar degradado</label>
+            </div>
+            @if (state(surface.key).gradient; as gradient) {
+              <qm-gradient-picker [idPrefix]="surface.key" [value]="gradient" (changed)="setGradient(surface.key, $event)" />
+            }
 
-        <label class="flex items-center gap-2 text-sm font-medium text-ink dark:text-ice">
-          <input
-            type="checkbox"
-            class="size-4 accent-void dark:accent-mist"
-            [checked]="!!page().gradient"
-            (change)="toggleGradient('page', $any($event.target).checked)"
-          />
-          Usar degradado
-        </label>
-        @if (page().gradient; as gradient) {
-          <qm-gradient-picker idPrefix="page" [value]="gradient" (changed)="setGradient('page', $event)" />
-        }
-
-        <div class="field-group">
-          <label class="field-label" for="page-css">CSS adicional</label>
-          <textarea
-            id="page-css"
-            class="branding-input branding-code"
-            rows="4"
-            spellcheck="false"
-            [value]="page().css"
-            (input)="setCss('page', $any($event.target).value)"
-          ></textarea>
-          <p class="field-hint">Se aplica después del degradado: fondo, borde y sombra. Vacío y sin degradado usa el fondo de la plantilla.</p>
-        </div>
-      </section>
-
-      <section class="card-section flex flex-col gap-4" aria-labelledby="sheet-heading">
-        <h2 id="sheet-heading" class="text-lg">Hoja de la cotización</h2>
-
-        <label class="flex items-center gap-2 text-sm font-medium text-ink dark:text-ice">
-          <input
-            type="checkbox"
-            class="size-4 accent-void dark:accent-mist"
-            [checked]="!!sheet().gradient"
-            (change)="toggleGradient('sheet', $any($event.target).checked)"
-          />
-          Usar degradado
-        </label>
-        @if (sheet().gradient; as gradient) {
-          <qm-gradient-picker idPrefix="sheet" [value]="gradient" (changed)="setGradient('sheet', $event)" />
-        }
-
-        <div class="field-group">
-          <label class="field-label" for="sheet-css">CSS adicional</label>
-          <textarea
-            id="sheet-css"
-            class="branding-input branding-code"
-            rows="4"
-            spellcheck="false"
-            [value]="sheet().css"
-            (input)="setCss('sheet', $any($event.target).value)"
-          ></textarea>
-          <p class="field-hint">Se aplica después del degradado: fondo, borde y sombra. Vacío y sin degradado usa la hoja plateada de la plantilla. Los destellos y la textura de la plantilla siempre quedan encima.</p>
-        </div>
-      </section>
+            <div class="flex flex-col gap-2">
+              <label [for]="surface.key + '-css'">CSS adicional</label>
+              <textarea
+                pTextarea
+                [id]="surface.key + '-css'"
+                class="w-full font-mono text-xs leading-relaxed"
+                rows="4"
+                spellcheck="false"
+                [value]="state(surface.key).css"
+                (input)="setCss(surface.key, $any($event.target).value)"
+              ></textarea>
+              <p-message size="small" severity="secondary" variant="simple">{{ surface.hint }}</p-message>
+            </div>
+          </div>
+        </p-card>
+      }
 
       @if (error(); as msg) {
-        <p class="field-error" role="alert">{{ msg }}</p>
+        <p-message severity="error" role="alert">{{ msg }}</p-message>
       }
 
       <div class="flex flex-wrap justify-end gap-2">
-        <button type="button" class="btn-neutral" (click)="reset()">Usar la plantilla</button>
-        <button type="button" class="btn-primary" (click)="save()" [disabled]="saving()">
-          {{ saving() ? 'Guardando…' : 'Guardar' }}
-        </button>
+        <p-button label="Usar la plantilla" severity="secondary" [outlined]="true" (onClick)="reset()" />
+        <p-button label="Guardar" [loading]="saving()" (onClick)="save()" />
       </div>
     </div>
 
